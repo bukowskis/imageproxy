@@ -28,6 +28,15 @@ describe Imageproxy::Convert do
       image.rows.should == 71
     end
 
+    it "respects ImageMagick geometry options" do
+      @options.stub(:resize).and_return("123x456!")
+      result = Imageproxy::Convert.new(@options, 1000).execute("test agent", 1234)
+
+      image = Magick::Image.from_blob(result.stream.read).first
+      image.columns.should == 123
+      image.rows.should ==456
+    end
+
     it "creates an ETag based on the source's ETag and the options" do
       result = Imageproxy::Convert.new(@options, 1000).execute("test agent", 1234)
 

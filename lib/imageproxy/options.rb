@@ -5,6 +5,7 @@ require 'mime/types'
 module Imageproxy
   class Options
     def initialize(path, query_params)
+      puts path
       params_from_path = path.split('/').reject { |s| s.nil? || s.empty? }
       command = params_from_path.shift
 
@@ -15,12 +16,13 @@ module Imageproxy
       @hash["source"] = @hash.delete("src") if @hash.has_key?("src")
 
       unescape_source
-      unescape_signature
+      unescape 'signature'
+      unescape 'resize'
       check_parameters
     end
 
     def check_parameters
-      check_param('resize', /^[0-9]{1,5}(x[0-9]{1,5})?$/)
+      check_param('resize', /^[0-9]{1,5}(x[0-9]{1,5})?[><!%]?$/)
       check_param('thumbnail', /^[0-9]{1,5}(x[0-9]{1,5})?$/)
       check_param('rotate', /^(-)?[0-9]{1,3}(\.[0-9]+)?$/)
       check_param('format', /^[0-9a-zA-Z]{2,6}$/)
@@ -56,10 +58,10 @@ module Imageproxy
       @hash['source'] &&= CGI.unescape(CGI.unescape(@hash['source']))
     end
 
-    def unescape_signature
-      @hash['signature'] &&= URI.unescape(@hash['signature'])
+    def unescape key
+      @hash[key] &&= URI.unescape(@hash[key])
     end
-
+    
     def merge_obfuscated
       if @hash["_"]
         decoded = Base64.decode64(CGI.unescape(@hash["_"]))

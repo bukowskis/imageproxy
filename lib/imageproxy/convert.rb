@@ -3,6 +3,7 @@ require File.join(File.expand_path(File.dirname(__FILE__)), "command")
 require 'RMagick'
 require 'rest_client'
 require 'digest'
+require 'benchmark'
 
 module Imageproxy
   class Convert < Imageproxy::Command
@@ -115,15 +116,21 @@ module Imageproxy
         request_options[:if_none_match] = %{"#{source_etag}"}
       end
 
-      begin
-        response = RestClient.get(options.source, request_options)
-      rescue RestClient::NotModified => e
-        return ConvertedImage.new(nil, e.response.headers, options, @cache_time, false)
+      response = image = nil
+      Benchmark.bm(16) do |bm|
+        bm.report("Download file:") do
+          begin
+            response = RestClient.get(options.source, request_options)
+          rescue RestClient::NotModified => e
+            return ConvertedImage.new(nil, e.response.headers, options, @cache_time, false)
+          end
+        end
+
+        original_image = response.to_str
+        bm.report("Process image:") do
+          image = process_image(original_image)
+        end
       end
-
-      original_image = response.to_str
-      image = process_image(original_image)
-
       ConvertedImage.new(image.to_blob, response.headers, options, @cache_time)
     end
   end
