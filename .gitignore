@@ -1,10 +1,6 @@
 .bundle
 
-# IntelliJ
-/.idea
-/*.iml
-/.rakeTasks
-
+log/
 # Emacs
 *~
 
@@ -26,4 +22,3 @@ pkg
 
 #ci_reporter
 spec/reports/
-bin/
