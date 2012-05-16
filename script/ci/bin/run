@@ -1,0 +1,28 @@
+#!/usr/bin/ruby
+
+# This whole thing works without bundle install.
+# Pure Ruby, just as Jenkins likes it ;)
+
+require 'net/http'
+require 'cgi'
+
+module CI
+  module Chat
+    def self.say(message, color='purple')
+      params = {:m => message, :color => color}
+      path = "/hubot?".concat(params.collect { |k,v| "#{k}=#{CGI::escape(v.to_s)}" }.join('&'))
+      Net::HTTP.start('localhost', 5777) { |http| http.get(path) }
+    end
+  end
+end
+
+def jenkins_link(title='logs')
+  %{<a href="#{ENV['BUILD_URL']}consoleFull">#{title}</a>}
+end
+
+if system %{ bash -l -c 'cd $(pwd) && (hash bundle 2>&- || { gem install bundler;}) && (bundle check || bundle install) && (rbenv rehash || echo "Faking rbenvs exit code" ) && script/ci/bin/setup && bundle exec rake spec' }
+  CI::Chat.say "ImageProxy CI #{jenkins_link('succeeded')}.", :green
+else
+  CI::Chat.say "ImageProxy CI #{jenkins_link('failed')}.", :red
+  abort
+end

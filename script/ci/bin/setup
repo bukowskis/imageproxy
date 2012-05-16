@@ -1,0 +1,7 @@
+#!/bin/bash
+for f in config/*.in
+do
+  dest=`echo $f |sed s/\.in//`
+  cp $f $dest
+done
+
