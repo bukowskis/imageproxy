@@ -26,7 +26,8 @@ module Imageproxy
       end
 
       def content_type
-        source_headers[:content_type]
+#        source_headers[:content_type]
+        "image/jpeg"
       end
 
       def empty?
@@ -83,6 +84,7 @@ module Imageproxy
 
     def process_image(original_image)
       image = Magick::Image.from_blob(original_image).first
+      image.format = "JPEG"
 
       if options.resize
         x, y = options.resize.split('x').collect(&:to_i)
