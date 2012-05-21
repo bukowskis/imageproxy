@@ -44,9 +44,25 @@ module Imageproxy
         StringIO.new(@image_blob)
       end
 
+      def cache_header cache_time
+        {"Cache-Control" => "public, max-age=#{cache_time}"}
+      end
+
+      def header_from_source key
+        value = source_headers[key]
+        return nil unless value
+        {key => value}
+      end
+
       def headers
-        cache_time = @cache_time || 86400
-        headers = {"Cache-Control" => "public, max-age=#{cache_time}", "Last-Modified" => Time.now.httpdate }
+        if @cache_time
+          headers = cache_header @cache_time
+        else
+          headers = header_from_source('Cache-Control')
+        end
+        headers ||= cache_header 86400
+
+        headers.merge!("Last-Modified" => Time.now.httpdate)
 
         if modified?
           headers.merge!("Content-Length" => size.to_s,

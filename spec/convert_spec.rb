@@ -53,6 +53,17 @@ describe Imageproxy::Convert do
       result = Imageproxy::Convert.new(@options, 1000).execute("test agent", 1234)
       result.headers['Last-Modified'].should be_instance_of(String)
     end
+
+    it "adds a Cache-Control header with max-age" do
+      result = Imageproxy::Convert.new(@options, 1000).execute("test agent", 1234)
+      result.headers['Cache-Control'].should include('max-age=1000')
+    end
+
+    it "adds a Cache-Control header from the source as default" do
+      @response.stub(:headers).and_return({:etag => '"SOMEETAG"', 'Cache-Control' => 'public, max-age=4711'})
+      result = Imageproxy::Convert.new(@options, nil).execute("test agent", 1234)
+      result.headers['Cache-Control'].should include('max-age=4711')
+    end
   end
 
   context "When requesting a resize we already may have cached" do
