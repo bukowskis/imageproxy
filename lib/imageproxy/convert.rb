@@ -48,21 +48,22 @@ module Imageproxy
         {"Cache-Control" => "public, max-age=#{cache_time}"}
       end
 
-      def header_from_source key
-        value = source_headers[key]
+      def cache_header_from_source
+        value = source_headers[:cache_control]
         return nil unless value
-        {key => value}
+        max_age = value.scan(/=\s*(\d*)/).flatten.first.to_i
+        cache_header max_age
       end
 
       def headers
         if @cache_time
           headers = cache_header @cache_time
         else
-          headers = header_from_source('Cache-Control')
+          headers = cache_header_from_source
         end
         headers ||= cache_header 86400
 
-        headers.merge!("Last-Modified" => Time.now.httpdate)
+        headers.merge!('Last-Modified' => source_headers[:last_modified] || Time.now.httpdate)
 
         if modified?
           headers.merge!("Content-Length" => size.to_s,
